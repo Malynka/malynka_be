@@ -58,10 +58,11 @@ export class ReceivingsController {
   }
 
   @Put()
-  async update(@Req() request: Request<{}, {}, UpdateReceivingDto>): Promise<void> {
-    const rec = await this.receivingsService.update(request.body);
+  async update(@Req() request: Request<{}, {}, UpdateReceivingDto>): Promise<Receiving> {
+    const res = await this.receivingsService.update(request.body);
 
-    if (!rec) throw new BadRequestException('Update failed. Make sure that provided receiving id is correct');
+    if (!res) throw new BadRequestException('Update failed. Make sure that provided receiving id is correct');
+    return res;
   }
   
   @Delete('/:id')

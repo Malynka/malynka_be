@@ -36,14 +36,22 @@ export class ReceivingsService {
   }
 
   async findByYear(year: number): Promise<Receiving[]> {
-    const res = await this.receivingModel.find().exec();
+    const res = await this.receivingModel.find().populate('client').exec();
     return res
       .filter(({ timestamp }) => new Date(timestamp).getFullYear() === year)
       .sort((r1, r2) => r2.timestamp - r1.timestamp);
   }
 
   async update(updateReceivingDto: UpdateReceivingDto): Promise<Receiving> {
-    return this.receivingModel.findOneAndUpdate({ _id: new Types.ObjectId(updateReceivingDto.id)}, updateReceivingDto.newData);
+    return this.receivingModel.findOneAndUpdate({ _id: new Types.ObjectId(updateReceivingDto.id)}, {
+      ...updateReceivingDto.newData,
+      ...(updateReceivingDto.newData.records?.length ? {
+        totalWeight: updateReceivingDto.newData.records.reduce((acc, curr) => acc + curr.weight, 0),
+        totalPrice: updateReceivingDto.newData.records.map(({ weight, price }) => weight * price).reduce((acc, curr) => acc + curr)
+      } : {})
+    }, {
+      new: true
+    }).populate('client').exec();
   }
 
   async deleteById(id: string) {
