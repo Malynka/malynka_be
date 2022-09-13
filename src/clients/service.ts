@@ -27,8 +27,8 @@ export class ClientsService {
     return this.clientModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
-  async update(name: string, newData: { name: string; note: string; }): Promise<Client> {
-    return this.clientModel.findOneAndUpdate({ name }, newData).exec();
+  async update(id: string, newData: { name: string; note: string; }): Promise<Client> {
+    return this.clientModel.findByIdAndUpdate(id, newData).exec();
   }
 
   async deleteById(id: string) {
