@@ -42,6 +42,13 @@ export class ReceivingsService {
       .sort((r1, r2) => r2.timestamp - r1.timestamp);
   }
 
+  async findByRangeAndClient(start: number, end: number = Date.now(), client: string = null) {
+    return (await this.receivingModel.find(client ? { client } : undefined).populate('client').exec())
+      .filter((r) => r.timestamp >= start && r.timestamp <= end)
+      .sort((r1, r2) => r1.client.name.toLowerCase().localeCompare(r2.client.name.toLowerCase()))
+      .sort((r1, r2) => r1.timestamp - r2.timestamp);
+  }
+
   async update(updateReceivingDto: UpdateReceivingDto): Promise<Receiving> {
     return this.receivingModel.findOneAndUpdate({ _id: new Types.ObjectId(updateReceivingDto.id)}, {
       ...updateReceivingDto.newData,
