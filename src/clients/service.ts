@@ -16,7 +16,7 @@ export class ClientsService {
   }
 
   async findAll(): Promise<Client[]> {
-    return this.clientModel.find().exec();
+    return (await this.clientModel.find().exec()).sort((c1, c2) => c1.name.toLowerCase().localeCompare(c2.name.toLowerCase()));
   }
 
   async findByName(name: string): Promise<Client | null> {
