@@ -8,6 +8,7 @@ import { SalesController } from "./controller";
 @Module({
   imports: [MongooseModule.forFeature([{ name: Sale.name, schema: SaleSchema }])],
   controllers: [SalesController],
-  providers: [SalesService]
+  providers: [SalesService],
+  exports: [SalesService]
 })
 export class SalesModule {}
