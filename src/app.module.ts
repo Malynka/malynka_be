@@ -6,6 +6,7 @@ import { ClientsModule } from './clients/module';
 import { ReceivingsModule } from './receivings/module';
 import { OwnReceivingsModule } from './ownReceivings/module';
 import { RaportModule } from './raport/module';
+import { SalesModule } from './sales/module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { RaportModule } from './raport/module';
     ClientsModule,
     ReceivingsModule,
     OwnReceivingsModule,
-    RaportModule
+    RaportModule,
+    SalesModule
   ],
   controllers: [AppController],
   providers: [AppService],
