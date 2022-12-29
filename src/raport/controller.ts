@@ -104,21 +104,26 @@ export class RaportController {
     if (Number.isNaN(end)) {
       throw new BadRequestException('End timestamp must be a number');
     }
+    
+    const startDate = new Date(start);
+    startDate.setHours(0, 0, 0, 0);
 
-    if (end < start) {
-      throw new BadRequestException('End timestamp must be greater that start one');
-    }
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59, 999);
 
-    const startDateString = new Date(start).toLocaleDateString('uk');
-    const endDateString = new Date(end).toLocaleDateString('uk');
+    const startDateString = startDate.toLocaleDateString('uk');
+    const endDateString = endDate.toLocaleDateString('uk');
 
     const workbook = new ExcelJS.Workbook();
 
     workbook.creator = 'Малинка';
     workbook.created = new Date();
 
-    const receivings = await this.receivingsService.findByRangeAndClient(start, end, client);
-    const sales = await this.salesService.findByRange(start, end);
+    console.log('CLIENT', client);
+
+    const receivings = await this.receivingsService.findByRangeAndClient(startDate.getTime(), endDate.getTime(), client);
+    console.log('CONTROLLER RECEIVINGS', receivings);
+    const sales = await this.salesService.findByRange(startDate.getTime(), endDate.getTime());
 
     await this.createReceivingsWorksheet(workbook, receivings, sales, start, end, client);
 
@@ -235,6 +240,8 @@ export class RaportController {
 
     let row = 10;
 
+    console.log('RECEIVINGS', receivings);
+
     receivings.forEach((receiving) => {
 
       const { records } = receiving;
@@ -283,9 +290,9 @@ export class RaportController {
       row += records.length;
     });
 
-    gotValueCell.value = this.createCellFormula(`SUM(F6:F${row-1}`);
+    gotValueCell.value = this.createCellFormula(`SUM(F10:F${row-1})`);
     gotValueCell.alignment = { horizontal: 'left' };
-    spendValueCell.value = this.createCellFormula(`SUM(G6:G${row-1})`);
+    spendValueCell.value = this.createCellFormula(`SUM(G10:G${row-1})`);
     spendValueCell.alignment = { horizontal: 'left' };
 
     soldValueCell.value = stats.soldWeight;
