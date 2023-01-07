@@ -8,7 +8,7 @@ import { SalesModule } from './sales/module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/malynkadb', {}),
+    MongooseModule.forRoot('mongodb://127.0.0.1:27017/malynkadb', {}),
     ClientsModule,
     ReceivingsModule,
     OwnReceivingsModule,
