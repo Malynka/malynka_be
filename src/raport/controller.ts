@@ -119,13 +119,10 @@ export class RaportController {
     workbook.creator = 'Малинка';
     workbook.created = new Date();
 
-    console.log('CLIENT', client);
-
     const receivings = await this.receivingsService.findByRangeAndClient(startDate.getTime(), endDate.getTime(), client);
-    console.log('CONTROLLER RECEIVINGS', receivings);
     const sales = await this.salesService.findByRange(startDate.getTime(), endDate.getTime());
 
-    await this.createReceivingsWorksheet(workbook, receivings, sales, start, end, client);
+    await this.createReceivingsWorksheet(workbook, receivings, start, end, client);
 
     response.attachment(`raport-${startDateString}-${endDateString}.xlsx`);
     workbook.xlsx.write(response).then(() => {
@@ -144,13 +141,11 @@ export class RaportController {
   private async createReceivingsWorksheet(
     workbook: ExcelJS.Workbook,
     receivings: Receiving[],
-    sales: Sale[],
     start: number,
     end: number,
     clientId?: string
   ) {
     const client = clientId && await this.clientsService.findById(clientId);
-    const stats = this.calculateStats(receivings, sales);
     const sheet = workbook.addWorksheet('Малина');
 
     // headers
@@ -162,32 +157,29 @@ export class RaportController {
     titleCell.alignment = headerAlignment;
 
     const gotCell = sheet.getCell('A2');
-    const gotValueCell = sheet.getCell('B2');
-    const spendCell = sheet.getCell('A3');
-    const spendValueCell = sheet.getCell('B3');
-
     gotCell.value = 'Зібрано (кг)';
+
+    const gotValueCell = sheet.getCell('B2');
+
+    const spendCell = sheet.getCell('A3');
     spendCell.value = 'Витрачено (грн)';
 
-    const soldCell = sheet.getCell('A4');
-    soldCell.value = 'Продано (кг)';
+    const spendValueCell = sheet.getCell('B3');
 
-    const soldValueCell = sheet.getCell('B4');
+    const maxPriceCell = sheet.getCell('A4');
+    maxPriceCell.value = 'Максимальна (грн/кг)';
 
-    const earnedCell = sheet.getCell('A5');
-    earnedCell.value = 'Зароблено (грн)';
+    const maxPriceValueCell = sheet.getCell('B4');
 
-    const earnedValueCell = sheet.getCell('B5');
+    const minPriceCell = sheet.getCell('A5');
+    minPriceCell.value = 'Мінімальна (грн/кг)';
 
-    const remainingsCell = sheet.getCell('A6');
-    remainingsCell.value = 'Залишок (кг)';
+    const minPriceValueCell = sheet.getCell('B5');
 
-    const remainingsValueCell = sheet.getCell('B6');
+    const avgPriceCell = sheet.getCell('A6');
+    avgPriceCell.value = 'Середня (грн/кг)';
 
-    const profitCell = sheet.getCell('A7');
-    profitCell.value = 'Прибуток (грн)';
-
-    const profitValueCell = sheet.getCell('B7');
+    const avgPriceValueCell = sheet.getCell('B6');
 
     sheet.mergeCells('A8:A9');
     const dateHeaderCell = sheet.getCell('A8');
@@ -233,14 +225,12 @@ export class RaportController {
     generalWeightHeaderCell.border = cellBorder;
 
     const generalPriceHeaderCell = sheet.getCell('G9');
-    generalPriceHeaderCell.value = 'Ціна (грн)';
+    generalPriceHeaderCell.value = 'Сума (грн)';
     generalPriceHeaderCell.alignment = headerAlignment;
     generalPriceHeaderCell.border = cellBorder;
     // ---------------------------------- 
 
     let row = 10;
-
-    console.log('RECEIVINGS', receivings);
 
     receivings.forEach((receiving) => {
 
@@ -269,10 +259,15 @@ export class RaportController {
 
         weightCell.value = weight;
         weightCell.border = cellBorder;
+        weightCell.numFmt = '#,##0.00';
+
         priceCell.value = price;
         priceCell.border = cellBorder;
+        priceCell.numFmt = '#,##0.00';
+
         sumCell.value = this.createCellFormula(`${weightCell.address}*${priceCell.address}`);
         sumCell.border = cellBorder;
+        sumCell.numFmt = '#,##0.00';
       }
 
       sheet.mergeCells(`F${row}:F${nextRow}`);
@@ -280,31 +275,38 @@ export class RaportController {
       generalWeightCell.value = this.createCellFormula(`SUM(C${row}:C${nextRow})`);
       generalWeightCell.alignment = headerAlignment;
       generalWeightCell.border = cellBorder;
+      generalWeightCell.numFmt = '#,##0.00';
 
       sheet.mergeCells(`G${row}:G${nextRow}`);
       const generalPriceCell = sheet.getCell(`G${row}`);
       generalPriceCell.value = this.createCellFormula(`SUM(E${row}:E${nextRow})`);
       generalPriceCell.alignment = headerAlignment;
       generalPriceCell.border = cellBorder;
+      generalPriceCell.numFmt = '#,##0.00';
 
       row += records.length;
     });
 
-    gotValueCell.value = this.createCellFormula(`SUM(F10:F${row-1})`);
+    gotValueCell.value = this.createCellFormula(`SUM(F10:F${row - 1})`);
     gotValueCell.alignment = { horizontal: 'left' };
-    spendValueCell.value = this.createCellFormula(`SUM(G10:G${row-1})`);
+    gotValueCell.numFmt = '#,##0.00';
+
+    spendValueCell.value = this.createCellFormula(`SUM(G10:G${row - 1})`);
     spendValueCell.alignment = { horizontal: 'left' };
+    spendValueCell.numFmt = '#,##0.00';
 
-    soldValueCell.value = stats.soldWeight;
-    soldValueCell.alignment = { horizontal: 'left' };
-    earnedValueCell.value = stats.earned;
-    earnedValueCell.alignment = { horizontal: 'left' };
+    maxPriceValueCell.value = this.createCellFormula(`MAX(D10:D${row - 1})`);
+    maxPriceValueCell.alignment = { horizontal: 'left' };
+    maxPriceValueCell.numFmt = '#,##0.00';
 
-    remainingsValueCell.value = this.createCellFormula('B2-B4');
-    remainingsValueCell.alignment = { horizontal: 'left' };
+    minPriceValueCell.value = this.createCellFormula(`MIN(D10:D${row - 1})`);
+    minPriceValueCell.alignment = { horizontal: 'left' };
+    minPriceValueCell.numFmt = '#,##0.00';
 
-    profitValueCell.value = this.createCellFormula('B5-B3');
-    profitValueCell.alignment = { horizontal: 'left' };
+    avgPriceValueCell.value = this.createCellFormula('B3/B2');
+    avgPriceValueCell.alignment = { horizontal: 'left' };
+    avgPriceValueCell.numFmt = '#,##0.00';
+    
 
     const columnsWidths = [15, 20, 15, 15 , 15, 20, 20];
 
