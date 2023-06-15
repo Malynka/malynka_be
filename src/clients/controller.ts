@@ -1,9 +1,16 @@
-import { Controller, Get, Post, Delete, Req, BadRequestException, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Req,
+  BadRequestException,
+  Put,
+} from '@nestjs/common';
 import { ClientsService } from './service';
 import { Client } from './schema';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { ClientDto } from './dto';
-
 
 // TODO before deleting client delete all receiving belonging to them
 @Controller('clients')
@@ -40,7 +47,7 @@ export class ClientsController {
 
     if (!body.id) {
       throw new BadRequestException('Id must be non-empty string');
-    } 
+    }
 
     if (!body.name) {
       throw new BadRequestException('New name must be non-empty string');
@@ -48,13 +55,15 @@ export class ClientsController {
 
     const client = await this.clientsService.update(body.id, {
       name: body.name,
-      note: body.note || ''
+      note: body.note || '',
     });
 
     if (!client) {
-      throw new BadRequestException('Updating failed. Make sure that client name is correct');
+      throw new BadRequestException(
+        'Updating failed. Make sure that client name is correct',
+      );
     }
-    
+
     return 'OK';
   }
 

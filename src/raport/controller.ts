@@ -196,7 +196,11 @@ export class RaportController {
         : `від ${new Date(start).toLocaleDateString('uk')} до ${new Date(
             end,
           ).toLocaleDateString('uk')}${
-            client ? ` від клієнта ${client.name}` : ''
+            client
+              ? ` від клієнта ${client.name}${
+                  client.isHidden ? ' (Прихований клієнт)' : ''
+                }`
+              : ''
           }`
     }`;
     titleCell.alignment = headerAlignment;
@@ -290,7 +294,9 @@ export class RaportController {
 
       sheet.mergeCells(`B${row}:B${nextRow}`);
       const clientCell = sheet.getCell(`B${row}`);
-      clientCell.value = receiving.client.name;
+      clientCell.value =
+        receiving.client.name +
+        (receiving.client.isHidden ? ' (Прихований)' : '');
       clientCell.alignment = headerAlignment;
       clientCell.border = cellBorder;
 
