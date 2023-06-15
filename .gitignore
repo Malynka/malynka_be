@@ -2,6 +2,10 @@
 /dist
 /node_modules
 
+# mongodb and nssm tools
+/mongotools
+/**/nssm.exe
+
 # Logs
 logs
 *.log

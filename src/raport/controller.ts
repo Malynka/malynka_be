@@ -1,29 +1,36 @@
-import { BadRequestException, Controller, Get, Req, Inject, Res } from "@nestjs/common";
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Req,
+  Inject,
+  Res,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ReceivingsService } from "@src/receivings/service";
-import { Receiving } from "@src/receivings/schema";
+import { ReceivingsService } from '@src/receivings/service';
+import { Receiving } from '@src/receivings/schema';
 import * as ExcelJS from 'exceljs';
-import { ClientsService } from "@src/clients/service";
-import { SalesService } from "@src/sales/service";
-import { Sale } from "@src/sales/schema";
+import { ClientsService } from '@src/clients/service';
+import { SalesService } from '@src/sales/service';
+import { Sale } from '@src/sales/schema';
 
 const headerAlignment: Partial<ExcelJS.Alignment> = {
   horizontal: 'center',
-  vertical: 'middle'
+  vertical: 'middle',
 };
 
 const borderSide: Partial<ExcelJS.Border> = {
   style: 'thin',
   color: {
-    argb: 'FF000000'
-  }
+    argb: 'FF000000',
+  },
 };
 
 const cellBorder: Partial<ExcelJS.Borders> = {
   left: borderSide,
   right: borderSide,
   top: borderSide,
-  bottom: borderSide
+  bottom: borderSide,
 };
 
 @Controller('raport')
@@ -36,12 +43,21 @@ export class RaportController {
   private readonly salesService: SalesService;
 
   private calculateStats(receivings: Receiving[], sales: Sale[]) {
-    const totalWeight = receivings.reduce((acc, curr) => acc + curr.totalWeight, 0);
-    const totalPrice = receivings.reduce((acc, curr) => acc + curr.totalPrice, 0);
+    const totalWeight = receivings.reduce(
+      (acc, curr) => acc + curr.totalWeight,
+      0,
+    );
+    const totalPrice = receivings.reduce(
+      (acc, curr) => acc + curr.totalPrice,
+      0,
+    );
     const allRecords = receivings.flatMap(({ records }) => records);
     const prices = allRecords.map(({ price }) => price);
     const soldWeight = sales.reduce((acc, curr) => acc + curr.weight, 0);
-    const earned = sales.reduce((acc, curr) => acc + curr.weight * curr.price, 0);
+    const earned = sales.reduce(
+      (acc, curr) => acc + curr.weight * curr.price,
+      0,
+    );
 
     return {
       totalWeight,
@@ -50,7 +66,7 @@ export class RaportController {
       earned,
       minPrice: prices?.length ? Math.min(...prices) : 0,
       maxPrice: prices?.length ? Math.max(...prices) : 0,
-      avgPrice: totalWeight ? +(totalPrice / totalWeight).toFixed(2) : 0
+      avgPrice: totalWeight ? +(totalPrice / totalWeight).toFixed(2) : 0,
     };
   }
 
@@ -72,7 +88,7 @@ export class RaportController {
 
     const receivings = await this.receivingsService.findByYear(year);
     const sales = await this.salesService.findByYear(year);
-    
+
     return this.calculateStats(receivings, sales);
   }
 
@@ -80,7 +96,10 @@ export class RaportController {
   async getYears() {
     const res = await this.receivingsService.findAll();
 
-    const years = res.map((r) => new Date(r.timestamp).getFullYear()).filter((y, i, self) => self.indexOf(y) === i).sort((a,b) => b - a);
+    const years = res
+      .map((r) => new Date(r.timestamp).getFullYear())
+      .filter((y, i, self) => self.indexOf(y) === i)
+      .sort((a, b) => b - a);
 
     const actualYear = new Date(Date.now()).getFullYear();
 
@@ -92,7 +111,10 @@ export class RaportController {
   }
 
   @Get('range')
-  async getByDateRange(@Req() request: Request<{ start: number, end?: number, client?: string}>, @Res() response: Response) {
+  async getByDateRange(
+    @Req() request: Request<{ start: number; end?: number; client?: string }>,
+    @Res() response: Response,
+  ) {
     const start = Number(request.query.start);
     const end = Number(request.query.end) || Date.now();
     const client = request.query.client ? String(request.query.client) : null;
@@ -104,7 +126,7 @@ export class RaportController {
     if (Number.isNaN(end)) {
       throw new BadRequestException('End timestamp must be a number');
     }
-    
+
     const startDate = new Date(start);
     startDate.setHours(0, 0, 0, 0);
 
@@ -119,12 +141,27 @@ export class RaportController {
     workbook.creator = 'Малинка';
     workbook.created = new Date();
 
-    const receivings = await this.receivingsService.findByRangeAndClient(startDate.getTime(), endDate.getTime(), client);
-    const sales = await this.salesService.findByRange(startDate.getTime(), endDate.getTime());
+    const receivings = await this.receivingsService.findByRangeAndClient(
+      startDate.getTime(),
+      endDate.getTime(),
+      client,
+    );
+    const sales = await this.salesService.findByRange(
+      startDate.getTime(),
+      endDate.getTime(),
+    );
 
-    await this.createReceivingsWorksheet(workbook, receivings, start, end, client);
+    await this.createReceivingsWorksheet(
+      workbook,
+      receivings,
+      start,
+      end,
+      client,
+    );
 
-    response.attachment(`raport-${startDateString}-${endDateString}.xlsx`);
+    response.attachment(
+      `hello-raport-${startDateString}-${endDateString}.xlsx`,
+    );
     workbook.xlsx.write(response).then(() => {
       response.end();
     });
@@ -134,7 +171,7 @@ export class RaportController {
     return {
       formula,
       sharedFormula: formula,
-      date1904: false
+      date1904: false,
     };
   }
 
@@ -143,9 +180,9 @@ export class RaportController {
     receivings: Receiving[],
     start: number,
     end: number,
-    clientId?: string
+    clientId?: string,
   ) {
-    const client = clientId && await this.clientsService.findById(clientId);
+    const client = clientId && (await this.clientsService.findById(clientId));
     const sheet = workbook.addWorksheet('Малина');
 
     // headers
@@ -153,7 +190,15 @@ export class RaportController {
     sheet.mergeCells(`A1:G1`);
     const titleCell = sheet.getCell('A1');
 
-    titleCell.value = `Звіт прийому малини ${start === end ? `за ${new Date(start).toLocaleDateString('uk')}` : `від ${new Date(start).toLocaleDateString('uk')} до ${new Date(end).toLocaleDateString('uk')}${client ? ` від клієнта ${client.name}` : ''}`}`;
+    titleCell.value = `Звіт прийому малини ${
+      start === end
+        ? `за ${new Date(start).toLocaleDateString('uk')}`
+        : `від ${new Date(start).toLocaleDateString('uk')} до ${new Date(
+            end,
+          ).toLocaleDateString('uk')}${
+            client ? ` від клієнта ${client.name}` : ''
+          }`
+    }`;
     titleCell.alignment = headerAlignment;
 
     const gotCell = sheet.getCell('A2');
@@ -228,12 +273,11 @@ export class RaportController {
     generalPriceHeaderCell.value = 'Сума (грн)';
     generalPriceHeaderCell.alignment = headerAlignment;
     generalPriceHeaderCell.border = cellBorder;
-    // ---------------------------------- 
+    // ----------------------------------
 
     let row = 10;
 
     receivings.forEach((receiving) => {
-
       const { records } = receiving;
 
       const nextRow = row + records.length - 1;
@@ -265,21 +309,27 @@ export class RaportController {
         priceCell.border = cellBorder;
         priceCell.numFmt = '#,##0.00';
 
-        sumCell.value = this.createCellFormula(`${weightCell.address}*${priceCell.address}`);
+        sumCell.value = this.createCellFormula(
+          `${weightCell.address}*${priceCell.address}`,
+        );
         sumCell.border = cellBorder;
         sumCell.numFmt = '#,##0.00';
       }
 
       sheet.mergeCells(`F${row}:F${nextRow}`);
       const generalWeightCell = sheet.getCell(`F${row}`);
-      generalWeightCell.value = this.createCellFormula(`SUM(C${row}:C${nextRow})`);
+      generalWeightCell.value = this.createCellFormula(
+        `SUM(C${row}:C${nextRow})`,
+      );
       generalWeightCell.alignment = headerAlignment;
       generalWeightCell.border = cellBorder;
       generalWeightCell.numFmt = '#,##0.00';
 
       sheet.mergeCells(`G${row}:G${nextRow}`);
       const generalPriceCell = sheet.getCell(`G${row}`);
-      generalPriceCell.value = this.createCellFormula(`SUM(E${row}:E${nextRow})`);
+      generalPriceCell.value = this.createCellFormula(
+        `SUM(E${row}:E${nextRow})`,
+      );
       generalPriceCell.alignment = headerAlignment;
       generalPriceCell.border = cellBorder;
       generalPriceCell.numFmt = '#,##0.00';
@@ -306,11 +356,12 @@ export class RaportController {
     avgPriceValueCell.value = this.createCellFormula('B3/B2');
     avgPriceValueCell.alignment = { horizontal: 'left' };
     avgPriceValueCell.numFmt = '#,##0.00';
-    
 
-    const columnsWidths = [15, 20, 15, 15 , 15, 20, 20];
+    const columnsWidths = [15, 20, 15, 15, 15, 20, 20];
 
-    sheet.columns.forEach((c, i) => { c.width = columnsWidths[i] });
+    sheet.columns.forEach((c, i) => {
+      c.width = columnsWidths[i];
+    });
 
     sheet.pageSetup.fitToPage = true;
     sheet.pageSetup.fitToWidth = 1;
