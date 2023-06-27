@@ -33,12 +33,23 @@ export class ClientsController {
     const clientWithThisName = await this.clientsService.findByName(body.name);
 
     if (clientWithThisName) {
-      throw new BadRequestException('Client with this name is already created');
+      throw new BadRequestException('CLIENT_ALREADY_EXISTS');
     }
 
     this.clientsService.create(body);
 
     return 'OK';
+  }
+
+  @Put('restore')
+  async restore(@Req() request: Request<{}, {}, { name: string }>) {
+    const { body } = request;
+
+    const client = await this.clientsService.findByName(body.name);
+
+    return this.clientsService.update(client._id.toString(), {
+      isHidden: false,
+    });
   }
 
   @Put()
@@ -67,7 +78,7 @@ export class ClientsController {
     return 'OK';
   }
 
-  @Delete('/:id')
+  @Delete(':id')
   async deleteById(@Req() request: Request<{ id: string }>) {
     return this.clientsService.deleteById(request.params.id);
   }
