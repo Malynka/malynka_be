@@ -1,14 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import * as mongoose from 'mongoose';
 import { Client } from 'src/clients/schema';
 import { Record } from 'src/interfaces';
+import { Document, SchemaTypes, Types } from 'mongoose';
 
-
-export type ReceivingDocument = Receiving & mongoose.Document;
+export type ReceivingDocument = Receiving & Document;
 
 @Schema({ versionKey: false })
 export class Receiving {
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Client' })
+  @Prop({ type: SchemaTypes.ObjectId, auto: true })
+  _id: Types.ObjectId;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Client' })
   client: Client;
 
   @Prop({ required: true })

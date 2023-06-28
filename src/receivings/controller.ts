@@ -1,4 +1,12 @@
-import { Controller, Req, Get, Post, BadRequestException, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Req,
+  Get,
+  Post,
+  BadRequestException,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { Receiving } from './schema';
 import { ReceivingsService } from './service';
@@ -7,9 +15,7 @@ import { ClientNotDefinedException } from './exceptions';
 
 @Controller('receivings')
 export class ReceivingsController {
-  constructor(
-    private readonly receivingsService: ReceivingsService
-  ) {}
+  constructor(private readonly receivingsService: ReceivingsService) {}
 
   @Get()
   async getAll(): Promise<Receiving[]> {
@@ -17,16 +23,21 @@ export class ReceivingsController {
   }
 
   @Get('year/:year')
-  async getByYear(@Req() request: Request<{ year: string }>): Promise<Receiving[]> {
+  async getByYear(
+    @Req() request: Request<{ year: string }>,
+  ): Promise<Receiving[]> {
     const year = Number(request.params.year);
 
-    if (Number.isNaN(year)) throw new BadRequestException('Year must be a number');
+    if (Number.isNaN(year))
+      throw new BadRequestException('Year must be a number');
 
     return this.receivingsService.findByYear(year);
   }
 
   @Post()
-  async create(@Req() request: Request<{}, {}, CreateReceivingDto>): Promise<Receiving> {
+  async create(
+    @Req() request: Request<{}, {}, CreateReceivingDto>,
+  ): Promise<Receiving> {
     const { body } = request;
 
     if (!body.client) {
@@ -45,11 +56,11 @@ export class ReceivingsController {
       client: body.client,
       records: body.records,
       timestamp: body.timestamp,
-    }
+    };
 
     try {
       return await this.receivingsService.create(res);
-    } catch(e) {
+    } catch (e) {
       if (e instanceof ClientNotDefinedException) {
         throw new BadRequestException(e.message);
       }
@@ -58,13 +69,18 @@ export class ReceivingsController {
   }
 
   @Put()
-  async update(@Req() request: Request<{}, {}, UpdateReceivingDto>): Promise<Receiving> {
+  async update(
+    @Req() request: Request<{}, {}, UpdateReceivingDto>,
+  ): Promise<Receiving> {
     const res = await this.receivingsService.update(request.body);
 
-    if (!res) throw new BadRequestException('Update failed. Make sure that provided receiving id is correct');
+    if (!res)
+      throw new BadRequestException(
+        'Update failed. Make sure that provided receiving id is correct',
+      );
     return res;
   }
-  
+
   @Delete('/:id')
   async deleteById(@Req() request: Request<{ id: string }>) {
     return this.receivingsService.deleteById(request.params.id);

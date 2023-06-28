@@ -1,27 +1,32 @@
 import { NestFactory } from '@nestjs/core';
-import { ClientsService } from '@src/clients/service';
+import { ReceivingsService } from '@src/receivings/service';
 import { AppModule } from './src/app.module';
 import type { INestApplicationContext } from '@nestjs/common';
 
 async function migrateData() {
-  console.log('Data migration is not needed. Completed successfully');
-  // let application: INestApplicationContext;
-  // try {
-  //   application = await NestFactory.createApplicationContext(AppModule);
-  //   const clientsService = application.get(ClientsService);
-  //   const clients = await clientsService.findAll();
-  //   for (const client of clients) {
-  //     await clientsService.update(client._id.toString(), {
-  //       isHidden: client.isHidden,
-  //     });
-  //   }
-  //   console.log('Data migration completed successfully.');
-  // } catch (error) {
-  //   console.error('Error occurred during data migration:', error);
-  // } finally {
-  //   await application.close();
-  //   process.exit(0);
-  // }
+  // console.log('Data migration is not needed. Completed successfully');
+  let application: INestApplicationContext;
+  try {
+    application = await NestFactory.createApplicationContext(AppModule);
+    const receivingsService = application.get(ReceivingsService);
+    const receivings = await receivingsService.findAll();
+    for (const receiving of receivings) {
+      await receivingsService.update({
+        id: receiving._id.toString(),
+        newData: {
+          client: receiving.client._id.toString(),
+          records: receiving.records,
+          timestamp: receiving.timestamp,
+        },
+      });
+    }
+    console.log('Data migration completed successfully.');
+  } catch (error) {
+    console.error('Error occurred during data migration:', error);
+  } finally {
+    await application.close();
+    process.exit(0);
+  }
 }
 
 migrateData();
