@@ -43,30 +43,37 @@ export class RaportController {
   private readonly salesService: SalesService;
 
   private calculateStats(receivings: Receiving[], sales: Sale[]) {
-    const totalWeight = receivings.reduce(
-      (acc, curr) => acc + curr.totalWeight,
-      0,
-    );
-    const totalPrice = receivings.reduce(
-      (acc, curr) => acc + curr.totalPrice,
-      0,
-    );
+    const totalWeight = +receivings
+      .reduce((acc, curr) => acc + curr.totalWeight, 0)
+      .toFixed(2);
+
+    const totalPrice = +receivings
+      .reduce((acc, curr) => acc + curr.totalPrice, 0)
+      .toFixed(0);
+
     const allRecords = receivings.flatMap(({ records }) => records);
     const prices = allRecords.map(({ price }) => price);
-    const soldWeight = sales.reduce((acc, curr) => acc + curr.weight, 0);
-    const earned = sales.reduce(
-      (acc, curr) => acc + curr.weight * curr.price,
-      0,
-    );
+
+    const soldWeight = +sales
+      .reduce((acc, curr) => acc + curr.weight, 0)
+      .toFixed(2);
+
+    const earned = +sales
+      .reduce((acc, curr) => acc + curr.weight * curr.price, 0)
+      .toFixed(0);
+
+    const minPrice = prices?.length ? Math.min(...prices) : 0;
+    const maxPrice = prices?.length ? Math.max(...prices) : 0;
+    const avgPrice = totalWeight ? +(totalPrice / totalWeight).toFixed(2) : 0;
 
     return {
       totalWeight,
       totalPrice,
       soldWeight,
       earned,
-      minPrice: prices?.length ? Math.min(...prices) : 0,
-      maxPrice: prices?.length ? Math.max(...prices) : 0,
-      avgPrice: totalWeight ? +(totalPrice / totalWeight).toFixed(2) : 0,
+      minPrice,
+      maxPrice,
+      avgPrice,
     };
   }
 
@@ -146,10 +153,11 @@ export class RaportController {
       endDate.getTime(),
       client,
     );
-    const sales = await this.salesService.findByRange(
-      startDate.getTime(),
-      endDate.getTime(),
-    );
+
+    // const sales = await this.salesService.findByRange(
+    //   startDate.getTime(),
+    //   endDate.getTime(),
+    // );
 
     await this.createReceivingsWorksheet(
       workbook,

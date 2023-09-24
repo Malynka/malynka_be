@@ -6,7 +6,7 @@ Write-Output "Step 2: Update back-end code"
 git pull
 
 Write-Output "Step 3: Create build"
-npm run build
+pnpm build
 
 Write-Output "Step 5: Migrate data"
 node ..\dist\migrate_data.js
