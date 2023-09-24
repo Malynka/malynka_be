@@ -1,1 +1,0 @@
-..\mongotools\mongorestore.exe --verbose D:\malynka\malynka_db_dump

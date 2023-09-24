@@ -1,5 +1,0 @@
-1. Відкрити PowerShell як адміністратор ( права кнопка мишки на Пуск -> Windows PoweShell (Admin) )
-2.  Скопіювати і вставити наступні команди до консолі, після кожної втискати ENTER:
-	D:
-	cd .\malynka\malynka_be\scripts
-	.\deploy.ps1
